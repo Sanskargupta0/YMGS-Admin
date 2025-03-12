@@ -3,6 +3,7 @@ import { useState } from "react";
 import { assets } from "../assets/assets";
 import { backendUrl } from "../App";
 import { toast } from "react-toastify";
+import PropTypes from 'prop-types';
 
 export const backendUrls = import.meta.env.VITE_BACKEND_URL;
 
@@ -28,6 +29,13 @@ const Add = ({ token }) => {
     { quantity: "1000", price: "325" }
   ]);
 
+  const handleQuantityPriceListToggle = (enabled) => {
+    setEnableQuantityPriceList(enabled);
+    if (enabled) {
+      setPrice("0"); // Set price to 0 when enabling quantity price list
+    }
+  };
+
   const handleQuantityPriceChange = (index, field, value) => {
     const newList = [...quantityPriceList];
     newList[index][field] = value;
@@ -47,6 +55,24 @@ const Add = ({ token }) => {
     e.preventDefault();
 
     try {
+      // Validate quantity price list if enabled
+      if (enableQuantityPriceList) {
+        // Check if there are any empty values
+        const hasEmptyValues = quantityPriceList.some(item => 
+          !item.quantity.trim() || !item.price.trim()
+        );
+        if (hasEmptyValues) {
+          toast.error("Please fill all quantity and price fields");
+          return;
+        }
+
+        // Sort quantity price list by quantity
+        const sortedList = [...quantityPriceList].sort((a, b) => 
+          parseInt(a.quantity) - parseInt(b.quantity)
+        );
+        setQuantityPriceList(sortedList);
+      }
+
       const formData = new FormData();
 
       formData.append("name", name);
@@ -56,8 +82,8 @@ const Add = ({ token }) => {
       formData.append("subCategory", subCategory);
       formData.append("bestseller", bestseller);
 
-      // Only set minOrderQuantity if enabled
-      if (enableMinOrder && minOrderQuantity) {
+      // Only set minOrderQuantity if enabled and no quantity price list
+      if (enableMinOrder && minOrderQuantity && !enableQuantityPriceList) {
         formData.append("minOrderQuantity", minOrderQuantity);
       }
 
@@ -71,6 +97,8 @@ const Add = ({ token }) => {
       image3 && formData.append("image3", image3);
       image4 && formData.append("image4", image4);
 
+      const toastId = toast.loading("Adding product...");
+
       const response = await axios.post(
         backendUrl + "/api/product/add",
         formData,
@@ -78,7 +106,12 @@ const Add = ({ token }) => {
       );
 
       if (response.data.success) {
-        toast.success(response.data.message);
+        toast.update(toastId, {
+          render: response.data.message,
+          type: "success",
+          isLoading: false,
+          autoClose: 3000
+        });
         setName("");
         setDescription("");
         setImage1(false);
@@ -96,7 +129,12 @@ const Add = ({ token }) => {
           { quantity: "1000", price: "325" }
         ]);
       } else {
-        toast.error(response.data.message);
+        toast.update(toastId, {
+          render: response.data.message,
+          type: "error",
+          isLoading: false,
+          autoClose: 3000
+        });
       }
     } catch (error) {
       console.log(error);
@@ -200,8 +238,9 @@ const Add = ({ token }) => {
           <select
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-3 py-2"
+            defaultValue="None"
           >
-            <option value="None" selected>
+            <option value="None">
               None
             </option>
             <option value="Prescription">Prescription Medicines</option>
@@ -218,8 +257,9 @@ const Add = ({ token }) => {
           <select
             onChange={(e) => setSubCategory(e.target.value)}
             className="w-full px-3 py-2"
+            defaultValue="None"
           >
-            <option value="None" selected>
+            <option value="None">
               None
             </option>
             <option value="Tablets">Tablets</option>
@@ -240,6 +280,8 @@ const Add = ({ token }) => {
             className="w-full px-3 py-2 sm:w-[120px]"
             type="Number"
             placeholder="25"
+            disabled={enableQuantityPriceList}
+            title={enableQuantityPriceList ? "Price is managed through quantity price list" : ""}
           />
         </div>
       </div>
@@ -284,7 +326,7 @@ const Add = ({ token }) => {
 
       <div className="flex gap-2 mt-2">
         <input
-          onChange={() => setEnableQuantityPriceList((prev) => !prev)}
+          onChange={(e) => handleQuantityPriceListToggle(e.target.checked)}
           checked={enableQuantityPriceList}
           type="checkbox"
           id="enableQuantityPriceList"
@@ -347,6 +389,10 @@ const Add = ({ token }) => {
       </button>
     </form>
   );
+};
+
+Add.propTypes = {
+  token: PropTypes.string.isRequired
 };
 
 export default Add;

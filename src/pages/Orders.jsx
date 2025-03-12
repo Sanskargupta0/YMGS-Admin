@@ -178,6 +178,12 @@ const Orders = ({ token }) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Orders Management</h1>
         <div className="flex items-center gap-4">
+        <button
+          onClick={fetchAllOrders}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          Refresh
+        </button>
           <button
             onClick={clearFilters}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md flex items-center gap-2 transition-colors"
