@@ -20,6 +20,28 @@ const Add = ({ token }) => {
   const [bestseller, setBestseller] = useState(false);
   const [minOrderQuantity, setMinOrderQuantity] = useState("1");
   const [enableMinOrder, setEnableMinOrder] = useState(false);
+  const [enableQuantityPriceList, setEnableQuantityPriceList] = useState(false);
+  const [quantityPriceList, setQuantityPriceList] = useState([
+    { quantity: "100", price: "95" },
+    { quantity: "250", price: "140" },
+    { quantity: "500", price: "210" },
+    { quantity: "1000", price: "325" }
+  ]);
+
+  const handleQuantityPriceChange = (index, field, value) => {
+    const newList = [...quantityPriceList];
+    newList[index][field] = value;
+    setQuantityPriceList(newList);
+  };
+
+  const addQuantityPriceItem = () => {
+    setQuantityPriceList([...quantityPriceList, { quantity: "", price: "" }]);
+  };
+
+  const removeQuantityPriceItem = (index) => {
+    const newList = quantityPriceList.filter((_, i) => i !== index);
+    setQuantityPriceList(newList);
+  };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -37,6 +59,11 @@ const Add = ({ token }) => {
       // Only set minOrderQuantity if enabled
       if (enableMinOrder && minOrderQuantity) {
         formData.append("minOrderQuantity", minOrderQuantity);
+      }
+
+      // Add quantity price list if enabled
+      if (enableQuantityPriceList) {
+        formData.append("quantityPriceList", JSON.stringify(quantityPriceList));
       }
 
       image1 && formData.append("image1", image1);
@@ -61,6 +88,13 @@ const Add = ({ token }) => {
         setPrice("");
         setMinOrderQuantity("1");
         setEnableMinOrder(false);
+        setEnableQuantityPriceList(false);
+        setQuantityPriceList([
+          { quantity: "100", price: "95" },
+          { quantity: "250", price: "140" },
+          { quantity: "500", price: "210" },
+          { quantity: "1000", price: "325" }
+        ]);
       } else {
         toast.error(response.data.message);
       }
@@ -247,6 +281,66 @@ const Add = ({ token }) => {
           Add to Best Seller
         </label>
       </div>
+
+      <div className="flex gap-2 mt-2">
+        <input
+          onChange={() => setEnableQuantityPriceList((prev) => !prev)}
+          checked={enableQuantityPriceList}
+          type="checkbox"
+          id="enableQuantityPriceList"
+        />
+        <label className="cursor-pointer" htmlFor="enableQuantityPriceList">
+          Enable Quantity Price List
+        </label>
+      </div>
+
+      {enableQuantityPriceList && (
+        <div className="w-full max-w-[500px]">
+          <p className="mb-2">Quantity Price List</p>
+          <div className="border border-gray-200 rounded-lg p-4">
+            {quantityPriceList.map((item, index) => (
+              <div key={index} className="flex gap-4 mb-3 items-center">
+                <div className="flex-1">
+                  <label className="text-sm text-gray-600 mb-1 block">Quantity</label>
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) => handleQuantityPriceChange(index, 'quantity', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    placeholder="Enter quantity"
+                    min="1"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-gray-600 mb-1 block">Price ($)</label>
+                  <input
+                    type="number"
+                    value={item.price}
+                    onChange={(e) => handleQuantityPriceChange(index, 'price', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    placeholder="Enter price"
+                    min="0"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeQuantityPriceItem(index)}
+                  className="mt-6 p-2 text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addQuantityPriceItem}
+              className="mt-2 px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
+            >
+              <span>+</span> Add Price Option
+            </button>
+          </div>
+        </div>
+      )}
 
       <button type="submit" className="w-28 py-3 mt-4 bg-black text-white">
         ADD
