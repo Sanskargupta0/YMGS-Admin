@@ -416,6 +416,11 @@ const Orders = ({ token }) => {
                           PayPal: {order.manualPaymentDetails.paypalEmail}
                         </div>
                       )}
+                      {order.manualPaymentDetails.paymentType === "crypto" && (
+                        <div className="mt-1">
+                          Crypto Transaction Id: {order.manualPaymentDetails.cryptoTransactionId}
+                        </div>
+                      )}
                       {order.manualPaymentDetails.paymentType ===
                         "credit_card" && (
                           <>
