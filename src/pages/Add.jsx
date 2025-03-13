@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { assets } from "../assets/assets";
 import { backendUrl } from "../App";
 import { toast } from "react-toastify";
@@ -7,11 +7,13 @@ import PropTypes from 'prop-types';
 
 export const backendUrls = import.meta.env.VITE_BACKEND_URL;
 
-const Add = ({ token }) => {
+const Add = ({ token, editMode = false, product = null, onEditComplete = null }) => {
   const [image1, setImage1] = useState(false);
   const [image2, setImage2] = useState(false);
   const [image3, setImage3] = useState(false);
   const [image4, setImage4] = useState(false);
+  const [existingImages, setExistingImages] = useState([]);
+  const [imagesToReplace, setImagesToReplace] = useState({});
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -28,6 +30,69 @@ const Add = ({ token }) => {
     { quantity: "500", price: "210" },
     { quantity: "1000", price: "325" }
   ]);
+
+  useEffect(() => {
+    if (editMode && product) {
+      setName(product.name);
+      setDescription(product.description);
+      setPrice(product.price.toString());
+      setCategory(product.category);
+      setSubCategory(product.subCategory);
+      setBestseller(product.bestseller);
+      setMinOrderQuantity(product.minOrderQuantity.toString());
+      setEnableMinOrder(product.minOrderQuantity > 1);
+      setExistingImages(product.image || []);
+      
+      if (product.quantityPriceList) {
+        setEnableQuantityPriceList(true);
+        
+        // Check if quantityPriceList is already an object or a JSON string
+        let parsedList;
+        if (typeof product.quantityPriceList === 'string') {
+          try {
+            parsedList = JSON.parse(product.quantityPriceList);
+          } catch (error) {
+            console.error("Error parsing quantityPriceList:", error);
+            parsedList = [];
+          }
+        } else if (Array.isArray(product.quantityPriceList)) {
+          parsedList = product.quantityPriceList;
+        } else {
+          parsedList = [];
+        }
+        
+        setQuantityPriceList(parsedList);
+        setPrice("0");
+      } else {
+        setEnableQuantityPriceList(false);
+      }
+    }
+  }, [editMode, product]);
+
+  const handleImageChange = (e, position) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    switch (position) {
+      case 1:
+        setImage1(file);
+        break;
+      case 2:
+        setImage2(file);
+        break;
+      case 3:
+        setImage3(file);
+        break;
+      case 4:
+        setImage4(file);
+        break;
+      default:
+        break;
+    }
+    
+    // Mark this position for replacement
+    setImagesToReplace(prev => ({ ...prev, [position-1]: true }));
+  };
 
   const handleQuantityPriceListToggle = (enabled) => {
     setEnableQuantityPriceList(enabled);
@@ -57,7 +122,6 @@ const Add = ({ token }) => {
     try {
       // Validate quantity price list if enabled
       if (enableQuantityPriceList) {
-        // Check if there are any empty values
         const hasEmptyValues = quantityPriceList.some(item => 
           !item.quantity.trim() || !item.price.trim()
         );
@@ -66,7 +130,6 @@ const Add = ({ token }) => {
           return;
         }
 
-        // Sort quantity price list by quantity
         const sortedList = [...quantityPriceList].sort((a, b) => 
           parseInt(a.quantity) - parseInt(b.quantity)
         );
@@ -82,25 +145,33 @@ const Add = ({ token }) => {
       formData.append("subCategory", subCategory);
       formData.append("bestseller", bestseller);
 
-      // Only set minOrderQuantity if enabled and no quantity price list
       if (enableMinOrder && minOrderQuantity && !enableQuantityPriceList) {
         formData.append("minOrderQuantity", minOrderQuantity);
       }
 
-      // Add quantity price list if enabled
       if (enableQuantityPriceList) {
         formData.append("quantityPriceList", JSON.stringify(quantityPriceList));
       }
 
-      image1 && formData.append("image1", image1);
-      image2 && formData.append("image2", image2);
-      image3 && formData.append("image3", image3);
-      image4 && formData.append("image4", image4);
+      if (editMode) {
+        formData.append("id", product._id);
+        
+        // Send the existing images array and the positions to replace
+        formData.append("existingImages", JSON.stringify(existingImages));
+        formData.append("imagesToReplace", JSON.stringify(imagesToReplace));
+      }
 
-      const toastId = toast.loading("Adding product...");
+      // Only append images that are provided
+      if (image1) formData.append("image1", image1);
+      if (image2) formData.append("image2", image2);
+      if (image3) formData.append("image3", image3);
+      if (image4) formData.append("image4", image4);
 
+      const toastId = toast.loading(editMode ? "Updating product..." : "Adding product...");
+
+      const endpoint = editMode ? "/api/product/edit" : "/api/product/add";
       const response = await axios.post(
-        backendUrl + "/api/product/add",
+        backendUrl + endpoint,
         formData,
         { headers: { token } }
       );
@@ -112,22 +183,28 @@ const Add = ({ token }) => {
           isLoading: false,
           autoClose: 3000
         });
-        setName("");
-        setDescription("");
-        setImage1(false);
-        setImage2(false);
-        setImage3(false);
-        setImage4(false);
-        setPrice("");
-        setMinOrderQuantity("1");
-        setEnableMinOrder(false);
-        setEnableQuantityPriceList(false);
-        setQuantityPriceList([
-          { quantity: "100", price: "95" },
-          { quantity: "250", price: "140" },
-          { quantity: "500", price: "210" },
-          { quantity: "1000", price: "325" }
-        ]);
+
+        if (editMode && onEditComplete) {
+          onEditComplete();
+        } else {
+          // Reset form for add mode
+          setName("");
+          setDescription("");
+          setImage1(false);
+          setImage2(false);
+          setImage3(false);
+          setImage4(false);
+          setPrice("");
+          setMinOrderQuantity("1");
+          setEnableMinOrder(false);
+          setEnableQuantityPriceList(false);
+          setQuantityPriceList([
+            { quantity: "100", price: "95" },
+            { quantity: "250", price: "140" },
+            { quantity: "500", price: "210" },
+            { quantity: "1000", price: "325" }
+          ]);
+        }
       } else {
         toast.update(toastId, {
           render: response.data.message,
@@ -152,12 +229,12 @@ const Add = ({ token }) => {
         <div className="flex gap-2">
           <label htmlFor="image1">
             <img
-              className="w-25"
-              src={!image1 ? assets.upload_area : URL.createObjectURL(image1)}
+              className="w-25 h-25 object-cover"
+              src={!image1 ? (editMode && existingImages[0] ? existingImages[0] : assets.upload_area) : URL.createObjectURL(image1)}
               alt=""
             />
             <input
-              onChange={(e) => setImage1(e.target.files[0])}
+              onChange={(e) => handleImageChange(e, 1)}
               type="file"
               id="image1"
               hidden
@@ -166,12 +243,12 @@ const Add = ({ token }) => {
 
           <label htmlFor="image2">
             <img
-              className="w-25"
-              src={!image2 ? assets.upload_area : URL.createObjectURL(image2)}
+              className="w-25 h-25 object-cover"
+              src={!image2 ? (editMode && existingImages[1] ? existingImages[1] : assets.upload_area) : URL.createObjectURL(image2)}
               alt=""
             />
             <input
-              onChange={(e) => setImage2(e.target.files[0])}
+              onChange={(e) => handleImageChange(e, 2)}
               type="file"
               id="image2"
               hidden
@@ -180,12 +257,12 @@ const Add = ({ token }) => {
 
           <label htmlFor="image3">
             <img
-              className="w-25"
-              src={!image3 ? assets.upload_area : URL.createObjectURL(image3)}
+              className="w-25 h-25 object-cover"
+              src={!image3 ? (editMode && existingImages[2] ? existingImages[2] : assets.upload_area) : URL.createObjectURL(image3)}
               alt=""
             />
             <input
-              onChange={(e) => setImage3(e.target.files[0])}
+              onChange={(e) => handleImageChange(e, 3)}
               type="file"
               id="image3"
               hidden
@@ -194,12 +271,12 @@ const Add = ({ token }) => {
 
           <label htmlFor="image4">
             <img
-              className="w-25"
-              src={!image4 ? assets.upload_area : URL.createObjectURL(image4)}
+              className="w-25 h-25 object-cover"
+              src={!image4 ? (editMode && existingImages[3] ? existingImages[3] : assets.upload_area) : URL.createObjectURL(image4)}
               alt=""
             />
             <input
-              onChange={(e) => setImage4(e.target.files[0])}
+              onChange={(e) => handleImageChange(e, 4)}
               type="file"
               id="image4"
               hidden
@@ -385,14 +462,17 @@ const Add = ({ token }) => {
       )}
 
       <button type="submit" className="w-28 py-3 mt-4 bg-black text-white">
-        ADD
+        {editMode ? "UPDATE" : "ADD"}
       </button>
     </form>
   );
 };
 
 Add.propTypes = {
-  token: PropTypes.string.isRequired
+  token: PropTypes.string.isRequired,
+  editMode: PropTypes.bool,
+  product: PropTypes.object,
+  onEditComplete: PropTypes.func
 };
 
 export default Add;

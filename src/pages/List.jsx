@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import PropTypes from 'prop-types';
+import Add from './Add';
 
 const List = ({ token }) => {
   const [list, setList] = useState([]);
@@ -23,6 +24,8 @@ const List = ({ token }) => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -92,6 +95,34 @@ const List = ({ token }) => {
       hasQuantityPrice: false,
     });
     setCurrentPage(1);
+  };
+
+  const handleEdit = (product) => {
+    // Create a copy of the product to avoid modifying the original
+    const productToEdit = { ...product };
+    
+    // Parse quantityPriceList if it exists and is a string
+    if (productToEdit.quantityPriceList) {
+      try {
+        if (typeof productToEdit.quantityPriceList === 'string') {
+          productToEdit.quantityPriceList = JSON.parse(productToEdit.quantityPriceList);
+        }
+        // If it's already an object, no need to parse
+      } catch (error) {
+        console.error("Error parsing quantity price list:", error);
+        toast.error("There was an error preparing the product for editing. Please try again.");
+        return;
+      }
+    }
+    
+    setEditingProduct(productToEdit);
+    setShowEditModal(true);
+  };
+
+  const handleEditComplete = async () => {
+    setShowEditModal(false);
+    setEditingProduct(null);
+    await fetchList();
   };
 
   useEffect(() => {
@@ -325,7 +356,7 @@ const List = ({ token }) => {
                       <Eye className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => {/* TODO: Implement edit */}}
+                      onClick={() => handleEdit(item)}
                       className="p-1 text-green-600 hover:text-green-800"
                     >
                       <Pencil className="w-5 h-5" />
@@ -370,6 +401,26 @@ const List = ({ token }) => {
           </button>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Edit Product</h2>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <Add token={token} editMode={true} product={editingProduct} onEditComplete={handleEditComplete} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
