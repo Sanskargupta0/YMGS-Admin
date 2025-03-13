@@ -10,14 +10,17 @@ import {
   Filter,
   ArrowUpDown,
   X,
+  Loader2,
 } from "lucide-react";
 import PropTypes from "prop-types";
 
 const Orders = ({ token }) => {
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage, setOrdersPerPage] = useState(10);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
@@ -40,25 +43,30 @@ const Orders = ({ token }) => {
 
   const fetchAllOrders = async () => {
     if (!token) return null;
+    setLoading(true);
 
     try {
       const response = await axios.post(
         backendUrl + "/api/order/list",
-        {},
+        {
+          page: currentPage,
+          limit: ordersPerPage,
+          ...filters,
+        },
         { headers: { token } }
       );
+      
       if (response.data.success) {
-        // Sort orders by date in descending order (latest first)
-        const sortedOrders = response.data.orders.sort(
-          (a, b) => new Date(b.date) - new Date(a.date)
-        );
-        setOrders(sortedOrders);
-        setFilteredOrders(sortedOrders);
+        setOrders(response.data.orders);
+        setTotalOrders(response.data.pagination.total);
+        setTotalPages(response.data.pagination.pages);
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,6 +112,7 @@ const Orders = ({ token }) => {
       status: "",
       paymentStatus: "",
     });
+    setCurrentPage(1);
   };
 
   const handleFilter = () => {
@@ -152,38 +161,34 @@ const Orders = ({ token }) => {
       );
     }
 
-    setFilteredOrders(filtered);
+    setOrders(filtered);
     setCurrentPage(1);
   };
 
   useEffect(() => {
     fetchAllOrders();
-  }, [token]);
+  }, [token, currentPage, ordersPerPage, filters]);
 
   useEffect(() => {
     handleFilter();
   }, [filters]);
-
-  // Pagination logic
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = filteredOrders.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
   return (
     <div className="p-4 md:p-6 bg-gray-50">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Orders Management</h1>
         <div className="flex items-center gap-4">
-        <button
-          onClick={fetchAllOrders}
-          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          Refresh
-        </button>
+          <button
+            onClick={fetchAllOrders}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 flex items-center gap-2"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Refresh"
+            )}
+          </button>
           <button
             onClick={clearFilters}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md flex items-center gap-2 transition-colors"
@@ -194,7 +199,10 @@ const Orders = ({ token }) => {
           <select
             className="p-2 border rounded bg-white text-gray-800 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             value={ordersPerPage}
-            onChange={(e) => setOrdersPerPage(Number(e.target.value))}
+            onChange={(e) => {
+              setOrdersPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
           >
             <option value={10}>10 per page</option>
             <option value={20}>20 per page</option>
@@ -321,7 +329,12 @@ const Orders = ({ token }) => {
       </div>
 
       {/* Orders Table */}
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
+      <div className="overflow-x-auto bg-white rounded-lg shadow relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+        )}
         <table className="min-w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -346,7 +359,7 @@ const Orders = ({ token }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {currentOrders.map((order, index) => (
+            {orders.map((order, index) => (
               <tr key={index} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-4">
                   <div className="flex flex-col md:flex-row gap-4">
@@ -490,14 +503,14 @@ const Orders = ({ token }) => {
       {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 bg-white p-4 rounded-lg shadow">
         <div className="text-sm text-gray-600">
-          Showing {indexOfFirstOrder + 1} to{" "}
-          {Math.min(indexOfLastOrder, filteredOrders.length)} of{" "}
-          {filteredOrders.length} orders
+          Showing {orders.length > 0 ? (currentPage - 1) * ordersPerPage + 1 : 0} to{" "}
+          {Math.min(currentPage * ordersPerPage, totalOrders)} of{" "}
+          {totalOrders} orders
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || loading}
             className="p-2 border rounded bg-white hover:bg-gray-50 border-gray-300 disabled:opacity-50 disabled:hover:bg-white transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -509,7 +522,7 @@ const Orders = ({ token }) => {
             onClick={() =>
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
             }
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || loading}
             className="p-2 border rounded bg-white hover:bg-gray-50 border-gray-300 disabled:opacity-50 disabled:hover:bg-white transition-colors"
           >
             <ChevronRight className="w-5 h-5 text-gray-600" />

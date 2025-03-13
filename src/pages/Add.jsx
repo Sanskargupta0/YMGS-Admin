@@ -16,8 +16,8 @@ const Add = ({ token }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("Vegetables");
-  const [subCategory, setSubCategory] = useState("Fresh");
+  const [category, setCategory] = useState("None");
+  const [subCategory, setSubCategory] = useState("None");
   const [bestseller, setBestseller] = useState(false);
   const [minOrderQuantity, setMinOrderQuantity] = useState("1");
   const [enableMinOrder, setEnableMinOrder] = useState(false);
