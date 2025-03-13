@@ -315,11 +315,9 @@ const Add = ({ token, editMode = false, product = null, onEditComplete = null })
           <select
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-3 py-2"
-            defaultValue="None"
+            value={category?category:"None"}
           >
-            <option value="None">
-              None
-            </option>
+            <option value="None">None</option>
             <option value="Prescription">Prescription Medicines</option>
             <option value="OTC">Over The Counter</option>
             <option value="Healthcare">Healthcare Devices</option>
@@ -334,11 +332,9 @@ const Add = ({ token, editMode = false, product = null, onEditComplete = null })
           <select
             onChange={(e) => setSubCategory(e.target.value)}
             className="w-full px-3 py-2"
-            defaultValue="None"
+            value={subCategory?subCategory:"None"}
           >
-            <option value="None">
-              None
-            </option>
+            <option value="None">None</option>
             <option value="Tablets">Tablets</option>
             <option value="Capsules">Capsules</option>
             <option value="Syrups">Syrups</option>

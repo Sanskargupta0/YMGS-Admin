@@ -242,7 +242,7 @@ const Contacts = ({ token }) => {
               <button
                 onClick={() => {
                   handleStatusChange(selectedContact._id, 'Responded');
-                  window.open(`mailto:${selectedContact.email}?subject=Re: Your message to YMGS&body=Dear ${selectedContact.name},%0D%0A%0D%0AThank you for contacting us.%0D%0A%0D%0A`);
+                  window.open(`mailto:${selectedContact.email}?subject=Re: Your message to YMGS pharmacy&body=Dear ${selectedContact.name},%0D%0A%0D%0AThank you for contacting us.%0D%0A%0D%0A`);
                 }}
                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               >
