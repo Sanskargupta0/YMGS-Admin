@@ -55,7 +55,7 @@ const Orders = ({ token }) => {
         },
         { headers: { token } }
       );
-      
+
       if (response.data.success) {
         setOrders(response.data.orders);
         setTotalOrders(response.data.pagination.total);
@@ -183,11 +183,7 @@ const Orders = ({ token }) => {
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 flex items-center gap-2"
             disabled={loading}
           >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              "Refresh"
-            )}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh"}
           </button>
           <button
             onClick={clearFilters}
@@ -373,6 +369,15 @@ const Orders = ({ token }) => {
                       )}
                     </div>
                     <div>
+                      {order.userId ? (
+                        <div className="text-sm font-medium text-gray-800">
+                          User ID: {order.userId}
+                        </div>
+                      ) : (
+                        <div className="text-sm font-medium text-gray-800">
+                          Guest User
+                        </div>
+                      )}
                       <div className="text-sm font-medium text-gray-800">
                         {order.items.map((item, i) => (
                           <div key={i}>
@@ -388,19 +393,65 @@ const Orders = ({ token }) => {
                 </td>
                 <td className="px-4 py-4">
                   <div className="text-sm">
-                    <div className="font-medium text-gray-800">
-                      {order.address.firstName} {order.address.lastName}
+                    {/* Delivery Address */}
+                    <div>
+                      <div className="font-medium text-gray-800">
+                        Delivery Address:
+                      </div>
+                      <div className="font-medium text-gray-800">
+                        {order.address.firstName} {order.address.lastName}
+                      </div>
+                      <div className="text-gray-600">{order.address.email}</div>
+                      <div className="text-gray-600">{order.address.phone}</div>
+                      <div className="mt-2 text-gray-600">
+                        <div>{order.address.street},</div>
+                        <div>
+                          {order.address.city}, {order.address.state}
+                        </div>
+                        <div>
+                          {order.address.country}, {order.address.zipcode}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-gray-600">{order.address.email}</div>
-                    <div className="text-gray-600">{order.address.phone}</div>
-                    <div className="mt-2 text-gray-600">
-                      <div>{order.address.street},</div>
-                      <div>
-                        {order.address.city}, {order.address.state}
+
+                    {/* Billing Address */}
+                    <div className="mt-4">
+                      <div className="font-medium text-gray-800">
+                        Billing Address:
                       </div>
-                      <div>
-                        {order.address.country}, {order.address.zipcode}
-                      </div>
+                      {order.billingAddress &&
+                      JSON.stringify(order.billingAddress) !==
+                        JSON.stringify(order.address) ? (
+                        /* Show different billing address */
+                        <div>
+                          <div className="font-medium text-gray-800">
+                            {order.billingAddress.firstName}{" "}
+                            {order.billingAddress.lastName}
+                          </div>
+                          <div className="text-gray-600">
+                            {order.billingAddress.email}
+                          </div>
+                          <div className="text-gray-600">
+                            {order.billingAddress.phone}
+                          </div>
+                          <div className="mt-2 text-gray-600">
+                            <div>{order.billingAddress.street},</div>
+                            <div>
+                              {order.billingAddress.city},{" "}
+                              {order.billingAddress.state}
+                            </div>
+                            <div>
+                              {order.billingAddress.country},{" "}
+                              {order.billingAddress.zipcode}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Addresses are the same */
+                        <div className="text-gray-600">
+                          Same as delivery address
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -418,41 +469,46 @@ const Orders = ({ token }) => {
                       )}
                       {order.manualPaymentDetails.paymentType === "crypto" && (
                         <div className="mt-1">
-                          Crypto Transaction Id: {order.manualPaymentDetails.cryptoTransactionId}
+                          Crypto Transaction Id:{" "}
+                          {order.manualPaymentDetails.cryptoTransactionId}
                         </div>
                       )}
                       {order.manualPaymentDetails.paymentType ===
                         "credit_card" && (
-                          <>
-                        <div className="mt-1">
-                          Credit Card Number: {order.manualPaymentDetails.cardNumber}
-                        </div>
-                        <div className="mt-1">
-                          Card Holder Name: {order.manualPaymentDetails.cardHolderName}
-                        </div>
-                        <div className="mt-1">
-                          Expiry Date: {order.manualPaymentDetails.expiryDate}
-                        </div>
-                        <div className="mt-1">
-                          CVV: {order.manualPaymentDetails.cvv}
-                        </div>
+                        <>
+                          <div className="mt-1">
+                            Credit Card Number:{" "}
+                            {order.manualPaymentDetails.cardNumber}
+                          </div>
+                          <div className="mt-1">
+                            Card Holder Name:{" "}
+                            {order.manualPaymentDetails.cardHolderName}
+                          </div>
+                          <div className="mt-1">
+                            Expiry Date: {order.manualPaymentDetails.expiryDate}
+                          </div>
+                          <div className="mt-1">
+                            CVV: {order.manualPaymentDetails.cvv}
+                          </div>
                         </>
                       )}
                       {order.manualPaymentDetails.paymentType ===
                         "debit_card" && (
-                          <>
-                        <div className="mt-1">
-                          Debit Card Number: {order.manualPaymentDetails.cardNumber}
-                        </div>
-                        <div className="mt-1">
-                          Card Holder Name: {order.manualPaymentDetails.cardHolderName}
-                        </div>
-                        <div className="mt-1">
-                          Expiry Date: {order.manualPaymentDetails.expiryDate}
-                        </div>
-                        <div className="mt-1">
-                          CVV: {order.manualPaymentDetails.cvv}
-                        </div>
+                        <>
+                          <div className="mt-1">
+                            Debit Card Number:{" "}
+                            {order.manualPaymentDetails.cardNumber}
+                          </div>
+                          <div className="mt-1">
+                            Card Holder Name:{" "}
+                            {order.manualPaymentDetails.cardHolderName}
+                          </div>
+                          <div className="mt-1">
+                            Expiry Date: {order.manualPaymentDetails.expiryDate}
+                          </div>
+                          <div className="mt-1">
+                            CVV: {order.manualPaymentDetails.cvv}
+                          </div>
                         </>
                       )}
                     </div>
@@ -508,9 +564,10 @@ const Orders = ({ token }) => {
       {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 bg-white p-4 rounded-lg shadow">
         <div className="text-sm text-gray-600">
-          Showing {orders.length > 0 ? (currentPage - 1) * ordersPerPage + 1 : 0} to{" "}
-          {Math.min(currentPage * ordersPerPage, totalOrders)} of{" "}
-          {totalOrders} orders
+          Showing{" "}
+          {orders.length > 0 ? (currentPage - 1) * ordersPerPage + 1 : 0} to{" "}
+          {Math.min(currentPage * ordersPerPage, totalOrders)} of {totalOrders}{" "}
+          orders
         </div>
         <div className="flex items-center space-x-2">
           <button
