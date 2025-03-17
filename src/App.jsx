@@ -10,6 +10,9 @@ import { useState } from 'react'
 import Login from './components/Login'
 import { ToastContainer } from 'react-toastify';
 import { useEffect } from 'react'
+import SiteSettings from './pages/SiteSettings'
+import Coupons from './pages/Coupons'
+import CryptoWallets from './pages/CryptoWallets'
 
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL
@@ -39,6 +42,9 @@ const App = () => {
             <Route path='/list' element={<List token={token} />} />
             <Route path='/orders' element={<Orders token={token} />} />
             <Route path='/contacts' element={<Contacts token={token} />} />
+            <Route path='/site-settings' element={<SiteSettings token={token} />} />
+            <Route path='/coupons' element={<Coupons token={token} />} />
+            <Route path='/crypto-wallets' element={<CryptoWallets token={token} />} />
           </Routes>
         </div>
       </div>

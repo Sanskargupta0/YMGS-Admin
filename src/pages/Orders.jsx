@@ -271,10 +271,11 @@ const Orders = ({ token }) => {
               }
             >
               <option value="">All Payment Types</option>
-              <option value="COD">COD</option>
-              <option value="Manual">Manual</option>
-              <option value="Razorpay">Razorpay</option>
-              <option value="Stripe">Stripe</option>
+              <option value="paypal">PayPal</option>
+              <option value="credit_card">Credit Card</option>
+              <option value="debit_card">Debit Card</option>
+              <option value="crypto">Crypto</option>
+              <option value="western_union">Western Union</option>
             </select>
           </div>
         </div>
@@ -351,6 +352,9 @@ const Orders = ({ token }) => {
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Payment Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Notes & Discounts
               </th>
             </tr>
           </thead>
@@ -468,10 +472,17 @@ const Orders = ({ token }) => {
                         </div>
                       )}
                       {order.manualPaymentDetails.paymentType === "crypto" && (
-                        <div className="mt-1">
-                          Crypto Transaction Id:{" "}
-                          {order.manualPaymentDetails.cryptoTransactionId}
-                        </div>
+                        <>
+                          <div className="mt-1">
+                            Crypto Type: {order.manualPaymentDetails.cryptoType || "Not specified"}
+                          </div>
+                          <div className="mt-1">
+                            Network: {order.manualPaymentDetails.cryptoNetwork || "Not specified"}
+                          </div>
+                          <div className="mt-1">
+                            Transaction ID: {order.manualPaymentDetails.cryptoTransactionId || "Not provided"}
+                          </div>
+                        </>
                       )}
                       {order.manualPaymentDetails.paymentType ===
                         "credit_card" && (
@@ -554,6 +565,29 @@ const Orders = ({ token }) => {
                       {order.payment ? "Paid" : "Pending"}
                     </span>
                   )}
+                </td>
+                <td className="px-4 py-4">
+                  <div className="text-sm">
+                    {order.notes && (
+                      <div className="mb-2">
+                        <span className="font-medium text-gray-800">Notes:</span>
+                        <p className="text-gray-600 mt-1 p-2 bg-gray-100 rounded text-xs">{order.notes}</p>
+                      </div>
+                    )}
+                    
+                    {order.coupon && (
+                      <div>
+                        <span className="font-medium text-gray-800">Coupon:</span>
+                        <div className="text-xs text-gray-600 mt-1">
+                          <div>Code: <span className="font-medium">{order.coupon.code}</span></div>
+                          <div>Discount: {currency} {order.coupon.discount}</div>
+                          {order.originalAmount && (
+                            <div>Original Total: {currency} {order.originalAmount}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
