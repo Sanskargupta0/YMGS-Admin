@@ -13,6 +13,7 @@ import { useEffect } from 'react'
 import SiteSettings from './pages/SiteSettings'
 import Coupons from './pages/Coupons'
 import CryptoWallets from './pages/CryptoWallets'
+import BlogManagement from './pages/BlogManagement'
 
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL
@@ -40,11 +41,12 @@ const App = () => {
           <Routes>
             <Route path='/add' element={<Add token={token} />} />
             <Route path='/list' element={<List token={token} />} />
-            <Route path='/orders' element={<Orders token={token} />} />
+            <Route path='/' element={<Orders token={token} />} />
             <Route path='/contacts' element={<Contacts token={token} />} />
             <Route path='/site-settings' element={<SiteSettings token={token} />} />
             <Route path='/coupons' element={<Coupons token={token} />} />
             <Route path='/crypto-wallets' element={<CryptoWallets token={token} />} />
+            <Route path='/blogs' element={<BlogManagement token={token} />} />
           </Routes>
         </div>
       </div>

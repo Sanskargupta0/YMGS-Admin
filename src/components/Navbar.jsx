@@ -3,7 +3,7 @@ const Navbar = ({setToken}) => {
   return (
     <div className='flex items-center py-2 px-[4%] justify-between'>
   <div className="flex items-center gap-2 font-display text-2xl text-primary">
-    <span className="text-lg sm:text-2xl">YMGS pharmacy Admin Dashboard</span>
+    <span className="text-lg sm:text-2xl">YMGS Pharmacy Admin Dashboard</span>
     <img 
       src={assets.logo} 
       alt="YMGS Pharmacy Logo" 
